@@ -1,8 +1,15 @@
 var express = require('express');
 var router = express.Router();
 var monk = require('monk');
-var db =  monk('mongodb+srv://Afrid:120397@cluster0.ahqrq.mongodb.net/Sample_Api?retryWrites=true&w=majority')
-var collection = db.get('Sales_Data');
+var db =  monk('localhost:27017/Sample_Sales', function(err,data){
+	if(data){
+		console.log('connected')
+	}
+	else{
+		console.log('err')
+	}
+})
+var collection = db.get('Sales');
 
 var moment = require('moment');
 
@@ -26,8 +33,6 @@ function gettimestamp(currentdate,temp)
 
 
 router.post('/:id/:name/:amount/:date', function(req,res){
-
-
 
 	var date = req.params.date;
 	var testtime = moment().format('hh:mm');
@@ -53,6 +58,35 @@ router.post('/:id/:name/:amount/:date', function(req,res){
 		}
 	})
 })
+
+router.get('/:id/:name/:amount/:date', function(req,res){
+
+	// console.log(req.params)
+	var date = req.params.date;
+	var testtime = moment().format('hh:mm');
+	var timestamp = gettimestamp(date,testtime);
+
+	var data = {
+		id:req.params.id,
+		name:req.params.name,
+		amount:parseInt(req.params.amount),
+		date:req.params.date,
+		weekofyear:moment(timestamp).format('w'),
+		year:moment(timestamp).format('YYYY'),
+		month:moment(timestamp).format('MMM'),
+		time:moment().format('hh:mm:ss'),
+		hourtime:moment().format('hh')
+	}
+	collection.insert(data,function(err,docs){
+		if(err){
+			res.send(err)
+		}
+		else{
+			res.send(docs)
+		}
+	})
+})
+
 
 router.get('/:daily', function(req,res){
 	if(req.params.daily == 'daily'){
